@@ -122,9 +122,12 @@ var tests = []Test{
     //inverted section tests
     {`{{a}}{{^b}}b{{/b}}{{c}}`, map[string]string{"a": "a", "c": "c"}, "abc"},
     {`{{a}}{{^b}}b{{/b}}{{c}}`, map[string]interface{}{"a": "a", "b": false, "c": "c"}, "abc"},
+    {`{{a}}{{^b}}b{{/b}}{{c}}`, map[string]interface{}{"a": "a", "b": []string{}, "c": "c"}, "abc"},
     {`{{^a}}b{{/a}}`, map[string]interface{}{"a": false}, "b"},
     {`{{^a}}b{{/a}}`, map[string]interface{}{"a": true}, ""},
     {`{{^a}}b{{/a}}`, map[string]interface{}{"a": "nonempty string"}, ""},
+    {`{{^a}}b{{/a}}`, map[string]interface{}{"a": []string{}}, "b"},
+    {`{{^a}}b{{/a}}`, map[string]interface{}{"a": []string{"nonempty"}}, ""},
 
     //function tests
     {`{{#users}}{{Func1}}{{/users}}`, map[string]interface{}{"users": []User{{"Mike", 1}}}, "Mike"},

@@ -429,6 +429,10 @@ func isNil(v reflect.Value) bool {
     switch val := valueInd; val.Kind() {
     case reflect.Bool:
         return !val.Bool()
+    case reflect.Slice:
+        return val.Len() == 0
+    case reflect.Array:
+        return val.Len() == 0
     }
 
     return false
@@ -464,9 +468,15 @@ func renderSection(section *sectionElement, contextChain *vector.Vector, buf io.
             for i := 0; i < val.Len(); i++ {
                 contexts.Push(val.Index(i))
             }
+            if val.Len() == 0 {
+                contexts.Push(context)
+            }
         case reflect.Array:
             for i := 0; i < val.Len(); i++ {
                 contexts.Push(val.Index(i))
+            }
+            if val.Len() == 0 {
+                contexts.Push(context)
             }
         case reflect.Map, reflect.Struct:
             contexts.Push(value)
