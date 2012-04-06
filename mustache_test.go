@@ -1,7 +1,6 @@
 package mustache
 
 import (
-    "container/vector"
     "os"
     "path"
     "strings"
@@ -48,10 +47,10 @@ func (u *User) Func5() (*settings, os.Error) {
     return &settings{true}, nil
 }
 
-func (u *User) Func6() (*vector.Vector, os.Error) {
-    var v vector.Vector
-    v.Push(&settings{true})
-    return &v, nil
+func (u *User) Func6() ([]interface{}, os.Error) {
+    var v []interface{}
+    v = append(v, &settings{true})
+    return v, nil
 }
 
 func (u User) Truefunc1() bool {
@@ -62,16 +61,24 @@ func (u *User) Truefunc2() bool {
     return true
 }
 
-func makeVector(n int) *vector.Vector {
-    v := new(vector.Vector)
+func makeVector(n int) []interface{} {
+    var v []interface{}
     for i := 0; i < n; i++ {
-        v.Push(&User{"Mike", 1})
+        v = append(v, &User{"Mike", 1})
     }
     return v
 }
 
-var tests = []Test{
+type Category struct {
+    Tag         string
+    Description string
+}
 
+func (c Category) DisplayName() string {
+    return c.Tag + " - " + c.Description
+}
+
+var tests = []Test{
     {`hello world`, nil, "hello world"},
     {`hello {{name}}`, map[string]string{"name": "world"}, "hello world"},
     {`{{var}}`, map[string]string{"var": "5 > 2"}, "5 &gt; 2"},
@@ -112,7 +119,7 @@ var tests = []Test{
     {`{{#users}}gone{{Name}}{{/users}}`, map[string]interface{}{"users": []User{}}, ""},
 
     {`{{#users}}{{Name}}{{/users}}`, map[string]interface{}{"users": []*User{&User{"Mike", 1}}}, "Mike"},
-    {`{{#users}}{{Name}}{{/users}}`, map[string]interface{}{"users": vector.Vector([]interface{}{&User{"Mike", 12}})}, "Mike"},
+    {`{{#users}}{{Name}}{{/users}}`, map[string]interface{}{"users": []interface{}{&User{"Mike", 12}}}, "Mike"},
     {`{{#users}}{{Name}}{{/users}}`, map[string]interface{}{"users": makeVector(1)}, "Mike"},
     {`{{Name}}`, User{"Mike", 1}, "Mike"},
     {`{{Name}}`, &User{"Mike", 1}, "Mike"},
@@ -148,6 +155,9 @@ var tests = []Test{
     {`hello {{#section}}{{name}}{{/section}}`, map[string]interface{}{"name": "bob", "section": map[string]string{"name": "world"}}, "hello world"},
     {`hello {{#bool}}{{#section}}{{name}}{{/section}}{{/bool}}`, map[string]interface{}{"bool": true, "section": map[string]string{"name": "world"}}, "hello world"},
     {`{{#users}}{{canvas}}{{/users}}`, map[string]interface{}{"canvas": "hello", "users": []User{{"Mike", 1}}}, "hello"},
+    {`{{#categories}}{{DisplayName}}{{/categories}}`, map[string][]*Category{
+        "categories": {&Category{"a", "b"}},
+    }, "a - b"},
 }
 
 func TestBasic(t *testing.T) {
@@ -206,6 +216,30 @@ func TestMalformed(t *testing.T) {
         output := Render(test.tmpl, test.context)
         if strings.Index(output, test.expected) == -1 {
             t.Fatalf("%q expected %q in error %q", test.tmpl, test.expected, output)
+        }
+    }
+}
+
+type LayoutTest struct {
+    layout   string
+    tmpl     string
+    context  interface{}
+    expected string
+}
+
+var layoutTests = []LayoutTest{
+    {`Header {{content}} Footer`, `Hello World`, nil, `Header Hello World Footer`},
+    {`Header {{content}} Footer`, `Hello {{s}}`, map[string]string{"s": "World"}, `Header Hello World Footer`},
+    {`Header {{content}} Footer`, `Hello {{content}}`, map[string]string{"content": "World"}, `Header Hello World Footer`},
+    {`Header {{extra}} {{content}} Footer`, `Hello {{content}}`, map[string]string{"content": "World", "extra": "extra"}, `Header extra Hello World Footer`},
+    {`Header {{content}} {{content}} Footer`, `Hello {{content}}`, map[string]string{"content": "World"}, `Header Hello World Hello World Footer`},
+}
+
+func TestLayout(t *testing.T) {
+    for _, test := range layoutTests {
+        output := RenderInLayout(test.tmpl, test.layout, test.context)
+        if output != test.expected {
+            t.Fatalf("%q expected %q got %q", test.tmpl, test.expected, output)
         }
     }
 }
