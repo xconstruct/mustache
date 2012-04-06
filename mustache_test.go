@@ -35,19 +35,19 @@ func (u *User) Func2() string {
 	return u.Name
 }
 
-func (u *User) Func3() (map[string]string, os.Error) {
+func (u *User) Func3() (map[string]string, error) {
 	return map[string]string{"name": u.Name}, nil
 }
 
-func (u *User) Func4() (map[string]string, os.Error) {
+func (u *User) Func4() (map[string]string, error) {
 	return nil, nil
 }
 
-func (u *User) Func5() (*settings, os.Error) {
+func (u *User) Func5() (*settings, error) {
 	return &settings{true}, nil
 }
 
-func (u *User) Func6() ([]interface{}, os.Error) {
+func (u *User) Func6() ([]interface{}, error) {
 	var v []interface{}
 	v = append(v, &settings{true})
 	return v, nil
